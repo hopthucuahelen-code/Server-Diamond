@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<title>Overlay - TikLive Bridge</title>
+<style>
+  html,body { margin:0; height:100%; background:transparent; overflow:hidden; font-family:Segoe UI,system-ui,sans-serif; color:#fff; }
+  .widget { position:absolute; z-index:4; }
+
+  /* events (toast) - duoi trai */
+  #w-events { left:24px; bottom:24px; display:flex; flex-direction:column-reverse; gap:10px; z-index:5; }
+  .toast { display:flex; align-items:center; gap:12px; background:rgba(15,18,24,.82);
+    border:1px solid rgba(255,255,255,.12); border-left:5px solid var(--c,#3ddc97);
+    border-radius:14px; padding:12px 18px; box-shadow:0 8px 24px rgba(0,0,0,.45);
+    backdrop-filter:blur(6px); animation:in .35s cubic-bezier(.2,1.3,.4,1) both; font-size:20px; max-width:520px; }
+  .toast.out { animation:out .4s ease forwards; }
+  .toast .ic { font-size:30px; } .toast b { color:#ffe27a; } .toast .sub { color:#bcd; font-size:15px; }
+  @keyframes in { from{opacity:0; transform:translateX(-40px) scale(.9);} to{opacity:1;transform:none;} }
+  @keyframes out { to{opacity:0; transform:translateX(-40px);} }
+
+  /* top gifters - tren phai */
+  #w-topgifters { right:24px; top:24px; width:240px; background:rgba(15,18,24,.78);
+    border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:12px 14px;
+    backdrop-filter:blur(6px); box-shadow:0 8px 24px rgba(0,0,0,.4); }
+  #w-topgifters h3 { margin:0 0 8px; font-size:15px; color:#ffe27a; }
+  .gifter { display:flex; align-items:center; gap:8px; padding:4px 0; font-size:15px; }
+  .gifter .rank { width:22px; height:22px; flex:0 0 22px; border-radius:50%; background:#2a323d;
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; }
+  .gifter:nth-child(2) .rank{background:#d4af37;color:#000;}
+  .gifter:nth-child(3) .rank{background:#b8c0c8;color:#000;}
+  .gifter:nth-child(4) .rank{background:#cd7f32;color:#000;}
+  .gifter .nm { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .gifter .co { color:#c46bff; font-weight:700; }
+  #w-topgifters .empty { color:#8b98a8; font-size:13px; }
+
+  /* stats - tren trai */
+  #w-stats { left:24px; top:24px; display:flex; gap:10px; }
+  .stat { background:rgba(15,18,24,.78); border:1px solid rgba(255,255,255,.12);
+    border-radius:12px; padding:8px 14px; text-align:center; backdrop-filter:blur(6px); min-width:64px; }
+  .stat .v { font-size:22px; font-weight:800; line-height:1; }
+  .stat .l { font-size:11px; color:#8b98a8; margin-top:3px; text-transform:uppercase; letter-spacing:.5px; }
+  .stat.coin .v{color:#c46bff;} .stat.gift .v{color:#ff8a4a;} .stat.like .v{color:#ffd24a;}
+
+  /* diamond counter + WIN - tren giua */
+  #w-diamond { left:50%; top:20px; transform:translateX(-50%); width:340px; text-align:center;
+    background:rgba(15,18,24,.82); border:1px solid rgba(110,200,255,.3); border-radius:16px;
+    padding:14px 18px; backdrop-filter:blur(6px); box-shadow:0 8px 28px rgba(0,0,0,.5); }
+  #w-diamond .row1 { display:flex; align-items:center; justify-content:center; gap:8px; font-size:30px; font-weight:900; }
+  #w-diamond .row1 .big { color:#7fdcff; } #w-diamond .row1 .goal { color:#8b98a8; font-size:20px; }
+  #w-diamond .bar { height:12px; background:#1b222c; border-radius:8px; overflow:hidden; margin:8px 0; }
+  #w-diamond .fill { height:100%; width:0%; background:linear-gradient(90deg,#3ddc97,#7fdcff); transition:width .5s cubic-bezier(.2,1,.3,1); }
+  #w-diamond .win { font-size:18px; font-weight:800; color:#ffd24a; }
+  #w-diamond .lbl { font-size:12px; color:#8b98a8; text-transform:uppercase; letter-spacing:1px; }
+  #w-diamond.pulse { animation:pulse .6s ease; }
+  @keyframes pulse { 0%{transform:translateX(-50%) scale(1);} 50%{transform:translateX(-50%) scale(1.08);} 100%{transform:translateX(-50%) scale(1);} }
+</style>
+</head>
+<body>
+<div id="w-stats" class="widget"></div>
+<div id="w-diamond" class="widget" style="display:none"></div>
+<div id="w-topgifters" class="widget"></div>
+<div id="w-events" class="widget"></div>
+
+<script>
+// ?widget=diamond|topgifters|stats|events  -> chi hien 1 widget; khong co -> hien tat ca (theo overlay.json)
+const ONLY = new URLSearchParams(location.search).get('widget');
+const STYLE = {
+  gift:{c:'#c46bff', ic:'\u{1F381}'}, comment:{c:'#4aa8ff', ic:'\u{1F4AC}'},
+  like:{c:'#ffd24a', ic:'❤️'}, follow:{c:'#3ddc97', ic:'➕'},
+  share:{c:'#ff8a4a', ic:'\u{1F501}'}, subscribe:{c:'#ff6bd0', ic:'⭐'},
+};
+let CFG = { eventDurationMs:5000, components:{}, sound:true, tts:{comments:true,gifts:true} };
+
+function widgetOn(name){
+  if(ONLY) return ONLY===name;                  // solo mode
+  return CFG.components?.[name] !== false;        // full mode: bat tru khi tat
+}
+
+// ---------- am thanh ----------
+let actx;
+function beep(type){
+  if(!CFG.sound || (ONLY && ONLY!=='events')) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const freqs = { gift:[660,990], follow:[523,784], like:[880], share:[440,660], comment:[520], subscribe:[784,1175] }[type] || [600];
+    freqs.forEach((f,i)=>{
+      const o=actx.createOscillator(), g=actx.createGain(); o.type='triangle'; o.frequency.value=f;
+      o.connect(g); g.connect(actx.destination); const t=actx.currentTime+i*0.12;
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.25,t+0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+0.4); o.start(t); o.stop(t+0.42);
+    });
+  }catch(e){}
+}
+function speak(text){
+  try{ const u=new SpeechSynthesisUtterance(text); u.lang='vi-VN'; u.rate=1.05;
+    const v=speechSynthesis.getVoices().find(v=>/vi/i.test(v.lang)); if(v) u.voice=v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+// ---------- events ----------
+function show(ev){
+  if(!widgetOn('events')) return;
+  beep(ev.type);
+  const s = STYLE[ev.type] || {c:'#3ddc97', ic:'✨'};
+  const name = ev.nickname || ev.user || 'viewer';
+  let text='', say='';
+  if(ev.type==='gift'){ text=`tang <b>${ev.giftName} x${ev.amount}</b>`; if(CFG.tts?.gifts) say=`${name} tặng ${ev.giftName}`; }
+  else if(ev.type==='comment'){ text=`<span class="sub">${(ev.comment||'').slice(0,60)}</span>`; if(CFG.tts?.comments) say=`${name} nói: ${ev.comment}`; }
+  else if(ev.type==='like'){ text=`<b>+${ev.amount}</b> like`; }
+  else if(ev.type==='follow'){ text=`vua <b>follow</b>!`; if(CFG.tts?.follows) say=`${name} vừa theo dõi`; }
+  else if(ev.type==='share'){ text=`da <b>chia se</b> live`; }
+  else if(ev.type==='subscribe'){ text=`vua <b>subscribe</b>!`; }
+  const el=document.createElement('div'); el.className='toast'; el.style.setProperty('--c',s.c);
+  el.innerHTML=`<span class="ic">${s.ic}</span><div><b>${name}</b> ${text}</div>`;
+  const feed=document.getElementById('w-events'); feed.appendChild(el);
+  while(feed.children.length>6) feed.firstChild.remove();
+  setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(),400); }, CFG.eventDurationMs||5000);
+  if(say) speak(say);
+}
+
+// ---------- stats ----------
+function renderStats(t){
+  if(!t) return;
+  document.getElementById('w-stats').innerHTML = `
+    <div class="stat coin"><div class="v">${t.coins||0}</div><div class="l">Coin</div></div>
+    <div class="stat gift"><div class="v">${t.gifts||0}</div><div class="l">Gift</div></div>
+    <div class="stat like"><div class="v">${t.likes||0}</div><div class="l">Like</div></div>`;
+}
+// ---------- top gifters ----------
+function renderTop(list){
+  const rows = (list&&list.length)
+    ? list.map((g,i)=>`<div class="gifter"><span class="rank">${i+1}</span><span class="nm">${g.nickname||g.user}</span><span class="co">${g.coins}</span></div>`).join('')
+    : `<div class="empty">Chua co qua tang...</div>`;
+  document.getElementById('w-topgifters').innerHTML = `<h3>\u{1F3C6} Top tang qua</h3>${rows}`;
+}
+// ---------- diamond + WIN ----------
+let lastWin = 0;
+function renderDiamond(c){
+  if(!c) return;
+  const el=document.getElementById('w-diamond');
+  const pct = c.goal>0 ? Math.min(100, Math.round((c.count/c.goal)*100)) : 0;
+  const winTxt = c.winGoal>0 ? `WIN ${c.win} / ${c.winGoal}` : `WIN ${c.win}`;
+  el.innerHTML = `
+    <div class="lbl">\u{1F48E} ${c.label||'Kim cuong'}</div>
+    <div class="row1"><span class="big">${c.count}</span><span class="goal">/ ${c.goal}</span></div>
+    <div class="bar"><div class="fill" style="width:${pct}%"></div></div>
+    <div class="win">\u{1F3C6} ${winTxt}</div>`;
+  if(c.win>lastWin){ el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); }
+  lastWin = c.win;
+}
+
+// ---------- ap dung hien/an widget ----------
+function applyVisibility(){
+  for(const name of ['stats','topgifters','events','diamond']){
+    document.getElementById('w-'+name).style.display = widgetOn(name) ? '' : 'none';
+  }
+}
+
+// ---------- WebSocket ----------
+function connect(){
+  const ws=new WebSocket(`ws://${location.host}`);
+  ws.onmessage=e=>{
+    const m=JSON.parse(e.data);
+    if(m.kind==='event') show(m.event);
+    else if(m.kind==='stats'){ renderStats(m.totals); renderTop(m.topGifters); }
+    else if(m.kind==='diamond') renderDiamond(m.counter);
+  };
+  ws.onclose=()=>setTimeout(connect,1500);
+}
+
+(async()=>{
+  try{
+    const st=await (await fetch('/api/state')).json();
+    if(st.pack?.overlay) CFG = { ...CFG, ...st.pack.overlay };
+    applyVisibility();
+    renderStats(st.session?.totals); renderTop(st.session?.topGifters||[]); renderDiamond(st.counter);
+  }catch(e){ applyVisibility(); }
+  connect();
+})();
+</script>
+</body>
+</html>

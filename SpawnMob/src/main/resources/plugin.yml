@@ -1,0 +1,27 @@
+name: SpawnMob
+version: 1.0.0
+main: com.serverdiamond.spawnmob.SpawnMob
+api-version: '1.21'
+author: ServerDiamond
+description: Spawn hostile mobs on a player (TikFinity-friendly) with an in-game alert.
+commands:
+  spawnmob:
+    description: Spawn hostile mobs around a player.
+    usage: /spawnmob <player> <user_name> <mob> <amount>
+    permission: spawnmob.admin
+  randommob:
+    description: Spin and spawn a random hostile mob.
+    usage: /randommob <player> <user_name> <amount>
+    permission: spawnmob.admin
+  tnt:
+    description: Spawn primed TNT on a player.
+    usage: /tnt <player> <user_name> <amount> <fuse_seconds> <power> <spawn_speed_ticks>
+    permission: spawnmob.admin
+  randomtnt:
+    description: Spin a random TNT amount (10-200) and spawn it.
+    usage: /randomtnt <player> <user_name>
+    permission: spawnmob.admin
+permissions:
+  spawnmob.admin:
+    description: Allows use of /spawnmob.
+    default: op

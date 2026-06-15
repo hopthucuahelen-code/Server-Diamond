@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diamond Counter Overlay</title>
+<style>
+  :root{
+    --ocean:#29ABE2;
+    --deep:#00B4D8;
+    --green:#2ecc71;
+    --red:#ff3b3b;
+  }
+  html, body{
+    margin:0; padding:0; height:100%;
+    background:transparent; overflow:hidden;
+    font-family:'Montserrat','Segoe UI',sans-serif;
+    user-select:none;
+  }
+  #stage{
+    position:fixed; top:46px; left:0; right:0;
+    display:flex; flex-direction:column; align-items:center; gap:18px;
+  }
+
+  /* ---- diamond icon ---- */
+  .gem{
+    width:90px; height:90px;
+    image-rendering:pixelated; image-rendering:crisp-edges;
+    filter:drop-shadow(0 0 14px rgba(41,171,226,.85)) drop-shadow(0 4px 10px rgba(0,0,0,.5));
+    animation:bobble 3s ease-in-out infinite;
+  }
+  @keyframes bobble{
+    0%,100%{ transform:translateY(0) rotate(-2deg); }
+    50%    { transform:translateY(-9px) rotate(2deg); }
+  }
+
+  /* ---- counter ---- */
+  #counterWrap{ position:relative; display:flex; align-items:baseline; gap:6px;
+    font-family:'Russo One','Arial Black',sans-serif; line-height:1; }
+  #cur{
+    font-size:130px; font-weight:900; color:#fff;
+    transition:color .25s ease, transform .12s ease;
+    text-shadow:0 0 18px rgba(41,171,226,.55), 0 6px 16px rgba(0,0,0,.65);
+  }
+  .goal{ font-size:64px; font-weight:900; color:#57E8E1;
+    text-shadow:0 0 14px rgba(87,232,225,.7), 0 4px 12px rgba(0,0,0,.6); }
+  #counterWrap.bump #cur{ transform:scale(1.12); }
+
+  /* ---- progress bar ---- */
+  #track{
+    width:360px; height:18px; border-radius:20px;
+    background:rgba(255,255,255,.12);
+    box-shadow:inset 0 2px 6px rgba(0,0,0,.55), 0 0 0 2px rgba(255,255,255,.12);
+    overflow:hidden; backdrop-filter:blur(2px);
+  }
+  #fill{
+    height:100%; width:0%; border-radius:20px;
+    background:linear-gradient(90deg,#ffffff,#7FDBFF 55%,var(--deep));
+    box-shadow:0 0 14px rgba(41,171,226,.9);
+    transition:width .35s cubic-bezier(.22,1,.36,1), background .3s ease;
+  }
+
+  /* ---- wins pill ---- */
+  #wins{
+    display:flex; align-items:center; gap:12px;
+    padding:12px 26px 12px 18px; border-radius:50px;
+    background:rgba(8,16,24,.55);
+    box-shadow:0 0 0 2px rgba(46,204,113,.55), 0 8px 22px rgba(0,0,0,.45);
+    backdrop-filter:blur(6px);
+    transition:transform .15s ease;
+    font-family:'Russo One','Arial Black',sans-serif;
+  }
+  #wins .trophy{ width:34px; height:34px; filter:drop-shadow(0 0 8px rgba(255,201,60,.9)); }
+
+  /* celebratory win animation */
+  #wins.win-anim{ animation:winPop .7s cubic-bezier(.2,1.35,.4,1); }
+  #wins.win-anim .trophy{ animation:trophyShine .7s ease; }
+  #wins.win-anim .num{ animation:numFlash .7s ease; }
+  @keyframes winPop{
+    0%  { transform:scale(1) rotate(0); box-shadow:0 0 0 2px rgba(46,204,113,.55),0 8px 22px rgba(0,0,0,.45); }
+    30% { transform:scale(1.4) rotate(-4deg); box-shadow:0 0 0 3px rgba(255,201,60,1),0 0 30px rgba(255,201,60,.95); }
+    55% { transform:scale(1.12) rotate(3deg); }
+    100%{ transform:scale(1) rotate(0); box-shadow:0 0 0 2px rgba(46,204,113,.55),0 8px 22px rgba(0,0,0,.45); }
+  }
+  @keyframes trophyShine{
+    0%,100%{ transform:scale(1) rotate(0); }
+    35%    { transform:scale(1.35) rotate(-12deg); }
+    65%    { transform:scale(1.2) rotate(10deg); }
+  }
+  @keyframes numFlash{
+    0%,100%{ color:#fff; text-shadow:0 0 10px rgba(255,255,255,.4),0 3px 8px rgba(0,0,0,.6); }
+    40%    { color:#FFE680; text-shadow:0 0 18px rgba(255,201,60,1); }
+  }
+  #wins .label{ font-size:30px; color:var(--green); letter-spacing:2px;
+    text-shadow:0 0 10px rgba(46,204,113,.6); }
+  #wins .num{ font-size:40px; color:#fff; min-width:28px; text-align:center;
+    text-shadow:0 0 10px rgba(255,255,255,.4),0 3px 8px rgba(0,0,0,.6); }
+
+  /* ---- floating popups ---- */
+  .popup{
+    position:absolute; left:50%; top:6px; transform:translateX(-50%);
+    font-family:'Russo One','Arial Black',sans-serif;
+    font-size:62px; font-weight:900; pointer-events:none; white-space:nowrap;
+    animation:floatUp 1.35s cubic-bezier(.22,1,.36,1) forwards;
+  }
+  .popup.plus { color:var(--green); text-shadow:0 0 16px rgba(46,204,113,.95),0 3px 8px rgba(0,0,0,.7); }
+  .popup.minus{ color:var(--red);   text-shadow:0 0 16px rgba(255,59,59,.95),0 3px 8px rgba(0,0,0,.7); }
+  @keyframes floatUp{
+    0%  { opacity:0; transform:translate(-50%,18px) scale(.6); }
+    18% { opacity:1; transform:translate(-50%,-6px) scale(1.2); }
+    100%{ opacity:0; transform:translate(-50%,-110px) scale(1); }
+  }
+
+  /* ---- big win-consume effect (counts down + diamond burst) ---- */
+  .wc-wrap{ position:fixed; left:0; right:0; top:110px; display:flex; justify-content:center;
+    pointer-events:none; z-index:50; transition:opacity .45s ease, transform .45s ease; }
+  .wc-wrap.wc-out{ opacity:0; transform:translateY(-44px) scale(.9); }
+  .wc-core{ animation:wcIn .5s cubic-bezier(.18,1.5,.4,1) both; }
+  .wc-num{ font-family:'Russo One','Arial Black',sans-serif; font-size:124px; font-weight:900; line-height:1;
+    background:linear-gradient(180deg,#ffffff 0%, #9beaff 45%, #1f9fd6 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 0 22px rgba(90,205,255,.95)) drop-shadow(0 0 46px rgba(41,171,226,.55))
+           drop-shadow(0 5px 12px rgba(0,0,0,.6));
+    animation:wcBreathe 1s ease-in-out infinite; }
+  .wc-particle{ position:fixed; left:50%; top:165px; image-rendering:pixelated;
+    pointer-events:none; z-index:49; filter:drop-shadow(0 0 9px rgba(91,224,230,.95));
+    animation:wcParticle 1.25s cubic-bezier(.2,.7,.3,1) forwards; }
+  @keyframes wcIn{
+    0%  { opacity:0; transform:scale(.3); }
+    60% { opacity:1; transform:scale(1.22); }
+    100%{ opacity:1; transform:scale(1); }
+  }
+  @keyframes wcBreathe{ 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.07);} }
+  @keyframes wcParticle{
+    0%{ opacity:1; transform:translate(-50%,0) scale(1) rotate(0); }
+    100%{ opacity:0; transform:translate(calc(-50% + var(--dx)), var(--dy)) scale(.35) rotate(var(--rot)); }
+  }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <!-- Minecraft diamond item texture (original 16x16, scaled crisp) -->
+    <img class="gem" alt="diamond" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAIVBMVEUAAAD////V//ah++hK7dks4NggxbUaqqcckZoRcnoUXlN/hNeyAAAAAXRSTlMAQObYZgAAAF1JREFUeNpjwApmzoTQnIJCE8CMiS5GWWABEWNltwVghpCQC4gx0dHFuKwKxHByNm4DM8SMTdpBjEku5eVpXUAGl3taWtkCECM8La0YxGBY4WKcBTaZa9WqBUg2AwByXRcdUQ3W3QAAAABJRU5ErkJggg==">
+
+
+    <div id="counterWrap"><span id="cur">0</span><span class="goal" id="goal">/ 64</span></div>
+
+    <div id="track"><div id="fill"></div></div>
+
+    <div id="wins">
+      <svg class="trophy" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#FFC93C">
+        <path d="M18 2H6v2H2v3a4 4 0 0 0 4 4h.3A6 6 0 0 0 11 15.9V18H8v2h8v-2h-3v-2.1A6 6 0 0 0 17.7 11H18a4 4 0 0 0 4-4V4h-4V2zM4 7V6h2v3a2 2 0 0 1-2-2zm16 0a2 2 0 0 1-2 2V6h2v1z"/>
+      </svg>
+      <span class="label">WIN</span><span class="num" id="winnum">0</span>
+    </div>
+  </div>
+
+<script>
+  var GOAL = 64;
+  var counterWrap = document.getElementById('counterWrap');
+  var curEl = document.getElementById('cur');
+  var goalEl = document.getElementById('goal');
+  var fillEl = document.getElementById('fill');
+  var winsEl = document.getElementById('wins');
+  var winNumEl = document.getElementById('winnum');
+  var lastCount = null, lastWins = null, lastGoal = null, lastWinGoal = null;
+
+  function colorFor(v){
+    if (v < 0) return '#ff3b3b';
+    if (v <= 0) return '#ffffff';
+    var t = Math.min(v, GOAL) / GOAL;
+    var stops = [[255,255,255],[127,219,255],[0,180,216]];
+    var seg = t * (stops.length - 1);
+    var i = Math.min(Math.floor(seg), stops.length - 2);
+    var f = seg - i, a = stops[i], b = stops[i+1];
+    return 'rgb(' + Math.round(a[0]+(b[0]-a[0])*f) + ',' +
+                     Math.round(a[1]+(b[1]-a[1])*f) + ',' +
+                     Math.round(a[2]+(b[2]-a[2])*f) + ')';
+  }
+
+  function spawnPopup(delta){
+    var el = document.createElement('div');
+    el.className = 'popup ' + (delta >= 0 ? 'plus' : 'minus');
+    el.textContent = (delta >= 0 ? '+' : '') + delta;
+    counterWrap.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 1450);
+  }
+
+  // --- tiny synth for the count-down "tick" sound ---
+  var actx = null;
+  function ensureAudio(){
+    if (!actx){ try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){} }
+    if (actx && actx.state === 'suspended') actx.resume();
+    return actx;
+  }
+  // resume audio after the first user interaction (browser autoplay policy)
+  window.addEventListener('click', ensureAudio, { once: true });
+  window.addEventListener('keydown', ensureAudio, { once: true });
+
+  // cute soft bell (sine + gentle octave shimmer)
+  function tick(freq){
+    var ctx = ensureAudio(); if (!ctx) return;
+    var t = ctx.currentTime;
+    [[1, 0.26], [2, 0.09]].forEach(function(p){
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = freq * p[0];
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(p[1], t + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.20);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(t); o.stop(t + 0.22);
+    });
+  }
+  // C major pentatonic -> cheerful little melody as it counts
+  var TICK_SCALE = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+
+  function spawnWinConsume(amount){
+    var gemSrc = document.querySelector('.gem') ? document.querySelector('.gem').src : '';
+    var wrap = document.createElement('div'); wrap.className = 'wc-wrap';
+    var core = document.createElement('div'); core.className = 'wc-core';
+    var num = document.createElement('span'); num.className = 'wc-num'; num.textContent = amount;
+    core.appendChild(num); wrap.appendChild(core); document.body.appendChild(wrap);
+
+    function burst(n){
+      for (var i = 0; i < n; i++){
+        var p = document.createElement('img'); p.className = 'wc-particle'; if (gemSrc) p.src = gemSrc;
+        var size = 16 + Math.random() * 20;
+        p.style.width = size + 'px'; p.style.height = size + 'px';
+        var ang = Math.random() * Math.PI * 2, dist = 100 + Math.random() * 150;
+        p.style.setProperty('--dx', (Math.cos(ang) * dist) + 'px');
+        p.style.setProperty('--dy', (Math.sin(ang) * dist - 40) + 'px'); // bias upward
+        p.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+        document.body.appendChild(p);
+        (function(el){ setTimeout(function(){ el.remove(); }, 1300); })(p);
+      }
+    }
+
+    // count the number down to 0 while spitting out diamonds
+    var steps = 24, i = 0;
+    burst(10);
+    tick(TICK_SCALE[0]);
+    var timer = setInterval(function(){
+      i++;
+      num.textContent = Math.max(0, Math.round(amount * (1 - i / steps)));
+      burst(3);
+      tick(TICK_SCALE[i % TICK_SCALE.length]); // cheerful pentatonic melody
+      if (i >= steps){
+        clearInterval(timer);
+        num.textContent = '0';
+        wrap.classList.add('wc-out');
+        setTimeout(function(){ wrap.remove(); }, 450);
+      }
+    }, 55);
+  }
+
+  function bump(el){
+    el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+    setTimeout(function(){ el.classList.remove('bump'); }, 170);
+  }
+
+  function render(s){
+    if (s.goal && s.goal !== lastGoal){
+      GOAL = s.goal;
+      goalEl.textContent = '/ ' + s.goal;
+      lastGoal = s.goal;
+      lastCount = null; // force the counter visuals to recompute with the new goal
+    }
+    if (s.count !== lastCount){
+      curEl.textContent = s.count;
+      var c = colorFor(s.count);
+      curEl.style.color = c;
+      curEl.style.textShadow = '0 0 18px ' + c + 'cc, 0 6px 16px rgba(0,0,0,.65)';
+      var pct = Math.max(0, Math.min(s.count, GOAL)) / GOAL * 100;
+      fillEl.style.width = pct + '%';
+      if (s.count < 0) fillEl.style.background = 'var(--red)';
+      else fillEl.style.background = 'linear-gradient(90deg,#ffffff,#7FDBFF 55%,var(--deep))';
+      bump(counterWrap);
+      lastCount = s.count;
+    }
+    if (s.wins !== lastWins || s.wingoal !== lastWinGoal){
+      winNumEl.textContent = (s.wingoal && s.wingoal > 0) ? (s.wins + ' / ' + s.wingoal) : s.wins;
+      if (s.wins !== lastWins){
+        winsEl.classList.remove('win-anim'); void winsEl.offsetWidth; winsEl.classList.add('win-anim');
+        setTimeout(function(){ winsEl.classList.remove('win-anim'); }, 720);
+      }
+      lastWins = s.wins;
+      lastWinGoal = s.wingoal;
+    }
+    if (s.pop && s.pop !== 0) spawnPopup(s.pop);
+    if (s.winpop && s.winpop > 0) spawnWinConsume(s.winpop);
+  }
+
+  function connect(){
+    var es = new EventSource('/events');
+    es.onmessage = function(e){ try { render(JSON.parse(e.data)); } catch(err){} };
+    es.onerror = function(){ es.close(); setTimeout(connect, 1500); };
+  }
+  connect();
+</script>
+</body>
+</html>

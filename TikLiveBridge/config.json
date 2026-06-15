@@ -1,0 +1,13 @@
+{
+  "activePack": "diamond",
+  "tiktok": {
+    "username": "your_tiktok_username"
+  },
+  "minecraft": {
+    "host": "127.0.0.1",
+    "rconPort": 25575,
+    "rconPassword": "diamond_live_2026",
+    "targetPlayer": "Helen",
+    "commandDelayMs": 250
+  }
+}

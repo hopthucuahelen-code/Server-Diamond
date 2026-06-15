@@ -1,0 +1,39 @@
+teleportenabled: true
+teleportauto: false
+godmode: false
+flymode: false
+muted: false
+jailed: false
+ip-address: 127.0.0.1
+afk: false
+socialspy: false
+npc: false
+powertoolsenabled: true
+accepting-pay: true
+baltop-exempt: false
+timestamps:
+  lastteleport: 1781405846481
+  lastheal: 0
+  mute: 0
+  jail: 0
+  onlinejail: 0
+  logout: 1781408967419
+  login: 1781408517807
+money: '0'
+last-account-name: meongu098
+lastlocation:
+  world: 2e009fe3-039e-409d-a93e-7a31e37d9a98
+  world-name: world
+  x: 252.53663445985873
+  y: -59.0
+  z: 298.15063826107973
+  yaw: -27.15283203125
+  pitch: -88.50006866455078
+logoutlocation:
+  world: 2e009fe3-039e-409d-a93e-7a31e37d9a98
+  world-name: world
+  x: -233.30000001192093
+  y: 31.200000047683716
+  z: -19.69999998807907
+  yaw: 179.98321533203125
+  pitch: -31.050020217895508

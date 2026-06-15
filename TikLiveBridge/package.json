@@ -1,0 +1,16 @@
+{
+  "name": "tiklive-bridge",
+  "version": "1.0.0",
+  "description": "Cau noi TikTok Live -> Minecraft (thay the TikFinity) cho Server Diamond",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "rcon-client": "^4.2.5",
+    "tiktok-live-connector": "^2.0.7",
+    "ws": "^8.18.0"
+  }
+}

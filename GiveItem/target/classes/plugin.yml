@@ -1,0 +1,27 @@
+name: GiveItem
+version: 1.0.0
+main: com.serverdiamond.giveitem.GiveItem
+api-version: '1.21'
+author: ServerDiamond
+description: Give items/kits to a player (TikFinity-friendly) with an in-game alert.
+commands:
+  giveitem:
+    description: Give an item or kit to a player.
+    usage: /giveitem <player> <user_name> <item> <amount>
+    permission: giveitem.admin
+  randomitem:
+    description: Spin a random amount (1..max) of an item and give it.
+    usage: /randomitem <player> <user_name> <item> <max_amount>
+    permission: giveitem.admin
+  removeitem:
+    description: Remove a special item (e.g. speed_pickaxe) from a player.
+    usage: /removeitem <player> <item>
+    permission: giveitem.admin
+  digspeed:
+    description: Set the Speed Pickaxe mining speed (higher = faster).
+    usage: /digspeed <level>
+    permission: giveitem.admin
+permissions:
+  giveitem.admin:
+    description: Allows use of GiveItem commands.
+    default: op

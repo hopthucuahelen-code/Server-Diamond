@@ -1,0 +1,2 @@
+# Bằng cách đặt eula=true, bạn đồng ý với EULA của Minecraft (https://aka.ms/MinecraftEULA).
+eula=true

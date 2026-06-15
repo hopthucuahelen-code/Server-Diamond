@@ -1,0 +1,50 @@
+{
+  "rules": [
+    {
+      "id": "comment-zombie",
+      "enabled": true,
+      "event": "comment",
+      "match": "zombie",
+      "command": "spawnmob {player} {user} zombie 5",
+      "note": "Ai go chu 'zombie' trong comment -> spawn 5 zombie"
+    },
+    {
+      "id": "like-diamond",
+      "enabled": true,
+      "event": "like",
+      "threshold": 50,
+      "command": "diamond {player} {user} + 1",
+      "note": "Cu moi 50 like -> +1 kim cuong"
+    },
+    {
+      "id": "follow-item",
+      "enabled": true,
+      "event": "follow",
+      "command": "giveitem {player} {user} golden_apple 1",
+      "note": "Follow -> tang 1 tao vang"
+    },
+    {
+      "id": "share-tnt",
+      "enabled": true,
+      "event": "share",
+      "command": "tnt {player} {user} 3 2 2 2",
+      "note": "Share -> 3 qua TNT"
+    },
+    {
+      "id": "gift-rose",
+      "enabled": true,
+      "event": "gift",
+      "match": "Rose",
+      "command": "spawnmob {player} {user} zombie {amount}",
+      "note": "Gift 'Rose' -> spawn so zombie = so hoa"
+    },
+    {
+      "id": "gift-default",
+      "enabled": true,
+      "event": "gift",
+      "match": "*",
+      "command": "diamond {player} {user} + {amount}",
+      "note": "Moi gift khac -> +kim cuong theo so luong"
+    }
+  ]
+}

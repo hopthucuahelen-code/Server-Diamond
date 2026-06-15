@@ -1,0 +1,17 @@
+{
+  "showEvents": true,
+  "eventDurationMs": 5000,
+  "components": {
+    "events": true,
+    "stats": true,
+    "topgifters": true,
+    "diamond": true
+  },
+  "sound": true,
+  "tts": {
+    "comments": true,
+    "gifts": true,
+    "follows": false
+  },
+  "goalDefault": 64
+}

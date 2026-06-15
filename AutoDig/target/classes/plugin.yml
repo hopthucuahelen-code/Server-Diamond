@@ -1,0 +1,15 @@
+name: AutoDig
+version: 1.0.0
+main: com.serverdiamond.autodig.AutoDig
+api-version: '1.21'
+author: ServerDiamond
+description: Auto-clears a path in front of the player when deep underground (Y<=0).
+commands:
+  autodig:
+    description: Toggle the auto-dig helper for yourself.
+    usage: /autodig
+    permission: autodig.use
+permissions:
+  autodig.use:
+    description: Allows toggling auto-dig.
+    default: true

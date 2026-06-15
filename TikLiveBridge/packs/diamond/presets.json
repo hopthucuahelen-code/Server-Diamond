@@ -1,0 +1,40 @@
+{
+  "presets": [
+    {
+      "id": "help",
+      "name": "Che do GIUP DO",
+      "description": "Nguoi xem tang qua/like de GIUP nguoi choi: cho do, kim cuong, giap, buff.",
+      "rules": [
+        { "id": "h-rose", "enabled": true, "event": "gift", "match": "Rose", "command": "diamond {player} {user} + {amount}", "note": "Rose -> them kim cuong" },
+        { "id": "h-gift", "enabled": true, "event": "gift", "match": "*", "command": "giveitem {player} {user} diamond {amount}", "note": "Moi gift -> tang kim cuong" },
+        { "id": "h-follow", "enabled": true, "event": "follow", "command": "giveitem {player} {user} golden_apple 1", "note": "Follow -> tao vang" },
+        { "id": "h-like", "enabled": true, "event": "like", "threshold": 100, "command": "giveitem {player} {user} bread 4", "note": "100 like -> banh mi" },
+        { "id": "h-cmt", "enabled": true, "event": "comment", "match": "giap", "command": "giveitem {player} {user} iron_kit 1", "note": "Go 'giap' -> bo giap sat" }
+      ]
+    },
+    {
+      "id": "troll",
+      "name": "Che do HANH HA",
+      "description": "Nguoi xem tang qua de PHA nguoi choi: spawn quai, TNT, tha tu tren cao...",
+      "rules": [
+        { "id": "t-rose", "enabled": true, "event": "gift", "match": "Rose", "command": "spawnmob {player} {user} zombie {amount}", "note": "Rose -> zombie" },
+        { "id": "t-gift", "enabled": true, "event": "gift", "match": "*", "command": "tnt {player} {user} {amount} 3 2 2", "note": "Moi gift -> TNT" },
+        { "id": "t-follow", "enabled": true, "event": "follow", "command": "skydrop {player} {user}", "note": "Follow -> tha tu tren troi" },
+        { "id": "t-share", "enabled": true, "event": "share", "command": "smite {player} {user}", "note": "Share -> set danh" },
+        { "id": "t-cmt", "enabled": true, "event": "comment", "match": "creeper", "command": "spawnmob {player} {user} charged_creeper 2", "note": "Go 'creeper' -> creeper dien" }
+      ]
+    },
+    {
+      "id": "balanced",
+      "name": "Che do CAN BANG",
+      "description": "Vua giup vua hanh tuy loai qua - kich tinh nhat.",
+      "rules": [
+        { "id": "b-small", "enabled": true, "event": "gift", "match": "Rose", "command": "diamond {player} {user} + {amount}", "note": "Qua nho (Rose) -> giup: kim cuong" },
+        { "id": "b-big", "enabled": true, "event": "gift", "match": "*", "command": "spawnmob {player} {user} zombie {amount}", "note": "Qua khac -> hanh: zombie" },
+        { "id": "b-follow", "enabled": true, "event": "follow", "command": "giveitem {player} {user} golden_apple 1", "note": "Follow -> tao vang" },
+        { "id": "b-share", "enabled": true, "event": "share", "command": "tnt {player} {user} 3 2 2 2", "note": "Share -> 3 TNT" },
+        { "id": "b-like", "enabled": true, "event": "like", "threshold": 50, "command": "diamond {player} {user} + 1", "note": "50 like -> 1 kim cuong" }
+      ]
+    }
+  ]
+}

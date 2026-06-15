@@ -1,0 +1,23 @@
+name: DiamondCounter
+version: 1.0.0
+main: com.serverdiamond.diamondcounter.DiamondCounter
+api-version: '1.21'
+author: ServerDiamond
+description: Diamond counter overlay for TikTok live (with WIN countdown and TikFinity commands).
+commands:
+  diamond:
+    description: Track a player and adjust their diamond counter.
+    usage: |-
+      /diamond track <player>  - start tracking a player
+      /diamond untrack         - stop tracking
+      /diamond status          - show current state
+      /diamond <player> <user_name> <+/-> <amount>  - (TikFinity) add/remove diamonds
+    permission: diamondcounter.admin
+  win:
+    description: Add or remove wins directly (TikFinity).
+    usage: '/win <player> <user_name> <+/-> <amount>'
+    permission: diamondcounter.admin
+permissions:
+  diamondcounter.admin:
+    description: Allows use of DiamondCounter commands.
+    default: op

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TikLive Bridge - Server Diamond</title>
+<style>
+  :root { --bg:#0e1116; --card:#171c24; --line:#262e3a; --txt:#e6edf3; --mut:#8b98a8; --acc:#3ddc97; --red:#ff5d5d; --blue:#4aa8ff; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:Segoe UI,system-ui,sans-serif; background:var(--bg); color:var(--txt); }
+  header { display:flex; align-items:center; gap:14px; padding:14px 20px; border-bottom:1px solid var(--line); background:var(--card); }
+  header h1 { font-size:18px; margin:0; }
+  .dot { width:10px; height:10px; border-radius:50%; background:var(--red); }
+  .dot.on { background:var(--acc); box-shadow:0 0 8px var(--acc); }
+  main { display:grid; grid-template-columns:1fr 1fr; gap:16px; padding:16px; max-width:1200px; margin:0 auto; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
+  .card h2 { font-size:14px; margin:0 0 12px; color:var(--mut); text-transform:uppercase; letter-spacing:.5px; }
+  input, select, button { font:inherit; }
+  input, select { background:#0e1116; border:1px solid var(--line); color:var(--txt); border-radius:8px; padding:8px 10px; width:100%; }
+  label { display:block; font-size:12px; color:var(--mut); margin:10px 0 4px; }
+  button { cursor:pointer; border:none; border-radius:8px; padding:9px 16px; font-weight:600; color:#0e1116; background:var(--acc); }
+  button.sec { background:#2a323d; color:var(--txt); }
+  button.danger { background:var(--red); color:#fff; }
+  .row { display:flex; gap:8px; align-items:center; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); }
+  th { color:var(--mut); font-weight:500; }
+  td input, td select { padding:4px 6px; font-size:12px; }
+  .toggle { width:auto; }
+  #log, #events { height:240px; overflow:auto; font-family:Consolas,monospace; font-size:12px; line-height:1.5; }
+  .lg { color:var(--mut); } .lg .error{color:var(--red);} .lg .rule{color:var(--acc);} .lg .rcon{color:var(--blue);}
+  .ev { padding:4px 0; border-bottom:1px solid var(--line); }
+  .badge { display:inline-block; min-width:64px; text-align:center; border-radius:6px; padding:1px 6px; font-size:11px; margin-right:6px; }
+  .gift{background:#5a2e6e;} .comment{background:#2a4d6e;} .like{background:#6e5a2a;} .follow{background:#2a6e4d;} .share{background:#6e3a2a;} .subscribe{background:#6e2a4d;}
+  .full { grid-column:1/3; }
+  .mut { color:var(--mut); font-size:12px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="dot" id="dot"></div>
+  <h1>TikLive Bridge <span class="mut">- Server Diamond</span></h1>
+  <span id="statusTxt" class="mut">Chua ket noi</span>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Ket noi TikTok Live</h2>
+    <label>Username kenh (khong can @)</label>
+    <div class="row">
+      <input id="username" placeholder="vi du: helen.live" />
+      <button id="btnConnect">Ket noi</button>
+      <button id="btnDisconnect" class="danger">Ngat</button>
+    </div>
+    <p class="mut">Kenh phai <b>dang live</b> thi moi ket noi duoc.</p>
+
+    <h2 style="margin-top:18px">Minecraft (RCON)</h2>
+    <div class="grid2">
+      <div><label>Nhan vat (player)</label><input id="targetPlayer" /></div>
+      <div><label>Delay lenh (ms)</label><input id="commandDelayMs" type="number" /></div>
+    </div>
+    <div style="margin-top:10px"><button class="sec" id="btnSaveMc">Luu cai dat</button></div>
+  </section>
+
+  <section class="card">
+    <h2>Test nhanh (khong can live)</h2>
+    <div class="grid2">
+      <div><label>Loai</label>
+        <select id="tType">
+          <option value="comment">comment</option>
+          <option value="gift">gift</option>
+          <option value="like">like</option>
+          <option value="follow">follow</option>
+          <option value="share">share</option>
+        </select>
+      </div>
+      <div><label>User</label><input id="tUser" value="viewer123" /></div>
+      <div><label>Comment / Gift name</label><input id="tText" placeholder="zombie / Rose" /></div>
+      <div><label>So luong</label><input id="tAmount" type="number" value="1" /></div>
+    </div>
+    <div style="margin-top:10px" class="row">
+      <button id="btnTest">Ban thu event</button>
+      <input id="rawCmd" placeholder="lenh tho: spawnmob Helen x zombie 5" />
+      <button class="sec" id="btnRaw">Gui lenh</button>
+    </div>
+  </section>
+
+  <section class="card full">
+    <h2>Bang mapping (gift/like/comment -> lenh)</h2>
+    <div class="row" style="margin-bottom:10px">
+      <span class="mut">Mau co san:</span>
+      <select id="presetSel" style="width:auto;min-width:180px"></select>
+      <button class="sec" id="btnApplyPreset">Ap dung mau</button>
+      <span id="presetDesc" class="mut"></span>
+    </div>
+    <table id="rules">
+      <thead><tr><th>Bat</th><th>Event</th><th>Match</th><th>Threshold</th><th>Lenh (/...)</th><th>Ghi chu</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div style="margin-top:10px" class="row">
+      <button class="sec" id="btnAddRule">+ Them rule</button>
+      <button id="btnSaveRules">Luu mapping</button>
+      <span class="mut">Bien: {player} {user} {nickname} {amount} {giftName} {comment} {coins}</span>
+    </div>
+  </section>
+
+  <section class="card full">
+    <h2>Link Overlay (dan vao OBS / TikTok Studio)</h2>
+    <div id="ovlinks"></div>
+    <span class="mut">Moi link la 1 browser source nen trong suot. Dung link "Day du" hoac lay tung widget rieng.</span>
+  </section>
+
+  <section class="card">
+    <h2>Event truc tiep</h2>
+    <div id="events"></div>
+  </section>
+  <section class="card">
+    <h2>Log he thong</h2>
+    <div id="log" class="lg"></div>
+  </section>
+</main>
+
+<script>
+let state = { config:{ rules:[], minecraft:{}, tiktok:{} } };
+
+async function api(path, body){
+  const r = await fetch(path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
+  return r.json();
+}
+
+function setStatus(on, txt){
+  document.getElementById('dot').classList.toggle('on',on);
+  document.getElementById('statusTxt').textContent = txt || (on?'Da ket noi':'Chua ket noi');
+}
+
+function renderMc(){
+  const m = state.config.minecraft||{};
+  username.value = state.config.tiktok?.username||'';
+  targetPlayer.value = m.targetPlayer||'';
+  commandDelayMs.value = m.commandDelayMs||250;
+}
+
+function renderRules(){
+  const tb = document.querySelector('#rules tbody'); tb.innerHTML='';
+  (state.pack?.rules||[]).forEach((r,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><input type="checkbox" class="toggle" ${r.enabled?'checked':''} data-i="${i}" data-k="enabled"></td>
+      <td><select data-i="${i}" data-k="event">${['comment','gift','like','follow','share','subscribe'].map(e=>`<option ${r.event===e?'selected':''}>${e}</option>`).join('')}</select></td>
+      <td><input value="${r.match||''}" data-i="${i}" data-k="match" placeholder="* / Rose"></td>
+      <td><input type="number" value="${r.threshold||''}" data-i="${i}" data-k="threshold" style="width:70px"></td>
+      <td><input value="${r.command||''}" data-i="${i}" data-k="command"></td>
+      <td><input value="${r.note||''}" data-i="${i}" data-k="note"></td>
+      <td><button class="danger" data-del="${i}">x</button></td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{state.pack.rules.splice(+b.dataset.del,1);renderRules();});
+  tb.querySelectorAll('[data-k]').forEach(el=>el.onchange=()=>{
+    const r=state.pack.rules[+el.dataset.i], k=el.dataset.k;
+    if(k==='enabled') r[k]=el.checked;
+    else if(k==='threshold') r[k]=el.value?+el.value:undefined;
+    else r[k]=el.value;
+  });
+}
+
+function addEvent(ev){
+  const d=document.getElementById('events');
+  const el=document.createElement('div'); el.className='ev';
+  const t = ev.type;
+  const detail = t==='gift'?`${ev.giftName} x${ev.amount}`:t==='comment'?ev.comment:t==='like'?`+${ev.amount} like`:'';
+  el.innerHTML=`<span class="badge ${t}">${t}</span><b>${ev.nickname||ev.user}</b> <span class="mut">${detail||''}</span>`;
+  d.prepend(el); while(d.children.length>40) d.lastChild.remove();
+}
+function addLog(l){
+  const d=document.getElementById('log');
+  const el=document.createElement('div'); el.innerHTML=`<span class="${l.level}">${l.line}</span>`;
+  d.prepend(el); while(d.children.length>200) d.lastChild.remove();
+}
+
+// WebSocket realtime
+function connectWS(){
+  const ws=new WebSocket(`ws://${location.host}`);
+  ws.onmessage=e=>{
+    const m=JSON.parse(e.data);
+    if(m.kind==='status') setStatus(m.connected, m.connected?('Live: @'+(m.username||'')):(m.error?('Loi: '+m.error):'Chua ket noi'));
+    else if(m.kind==='event') addEvent(m.event);
+    else if(m.kind==='log') addLog(m);
+    else if(m.kind==='pack'){ state.pack=m.pack; renderRules(); }
+  };
+  ws.onclose=()=>setTimeout(connectWS,1500);
+}
+
+// Buttons
+btnConnect.onclick=async()=>{const r=await api('/api/connect',{username:username.value});if(r.error)alert(r.error);};
+btnDisconnect.onclick=()=>api('/api/disconnect',{});
+btnSaveMc.onclick=async()=>{await api('/api/config',{minecraft:{...state.config.minecraft,targetPlayer:targetPlayer.value,commandDelayMs:+commandDelayMs.value},tiktok:{username:username.value}});alert('Da luu');};
+btnAddRule.onclick=()=>{state.pack.rules.push({id:'rule'+Date.now(),enabled:true,event:'comment',match:'',command:'',note:''});renderRules();};
+btnSaveRules.onclick=async()=>{await api('/api/mappings',{rules:state.pack.rules});alert('Da luu mapping');};
+btnApplyPreset.onclick=async()=>{
+  const id=presetSel.value; if(!id) return;
+  if(!confirm('Ap dung mau nay se THAY THE bang mapping hien tai. Tiep tuc?')) return;
+  const r=await api('/api/preset',{id}); if(r.rules){ state.pack.rules=r.rules; renderRules(); alert('Da ap dung mau. Ban co the chinh tiep roi bam Luu mapping.'); }
+};
+btnTest.onclick=()=>api('/api/test',{type:tType.value,user:tUser.value,comment:tText.value,giftName:tText.value,amount:+tAmount.value});
+btnRaw.onclick=()=>{api('/api/raw',{command:rawCmd.value});};
+
+function renderOverlayLinks(){
+  const base=location.origin;
+  const links=[
+    ['Day du (tat ca widget)','/overlay.html'],
+    ['Bo dem kim cuong + WIN','/overlay.html?widget=diamond'],
+    ['Top tang qua','/overlay.html?widget=topgifters'],
+    ['Thong ke (coin/gift/like)','/overlay.html?widget=stats'],
+    ['Thong bao su kien','/overlay.html?widget=events'],
+  ];
+  document.getElementById('ovlinks').innerHTML = links.map(([n,p])=>{
+    const url=base+p;
+    return `<div class="row" style="margin:4px 0"><span style="width:200px;color:var(--mut)">${n}</span>`
+      +`<input readonly value="${url}" style="flex:1" onclick="this.select()">`
+      +`<button class="sec" onclick="navigator.clipboard.writeText('${url}');this.textContent='Da copy'">Copy</button></div>`;
+  }).join('');
+}
+
+function renderPresets(){
+  const ps=state.pack?.presets||[];
+  presetSel.innerHTML = ps.length? ps.map(p=>`<option value="${p.id}">${p.name}</option>`).join('') : '<option value="">(khong co mau)</option>';
+  const upd=()=>{ const p=ps.find(x=>x.id===presetSel.value); presetDesc.textContent=p?p.description:''; };
+  presetSel.onchange=upd; upd();
+}
+
+(async()=>{
+  state=await api('/api/state');
+  setStatus(state.connected);
+  renderMc(); renderRules(); renderPresets(); renderOverlayLinks();
+  (state.recentEvents||[]).slice().reverse().forEach(addEvent);
+  connectWS();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+name: PlayerTroll
+version: 1.0.0
+main: com.serverdiamond.troll.PlayerTroll
+api-version: '1.21'
+author: ServerDiamond
+description: Harmful "troll" effects on a player (TikFinity-friendly) with in-game alerts.
+commands:
+  clearall:
+    description: Wipe a player's entire inventory.
+    usage: /clearall <player> <user_name>
+    permission: troll.admin
+  webcage:
+    description: Trap a player in a 3x3x3 cage of cobwebs.
+    usage: /webcage <player> <user_name>
+    permission: troll.admin
+  smite:
+    description: Strike a player with lightning.
+    usage: /smite <player> <user_name>
+    permission: troll.admin
+  pit:
+    description: Open a deadly 3x3 pit under a player.
+    usage: /pit <player> <user_name>
+    permission: troll.admin
+  skydrop:
+    description: Launch a player into the sky for a free fall (items hidden, water bucket given).
+    usage: /skydrop <player> <user_name>
+    permission: troll.admin
+  tntbox:
+    description: Box a player in TNT with two charged creepers.
+    usage: /tntbox <player> <user_name>
+    permission: troll.admin
+  killplayer:
+    description: Instantly kill a player.
+    usage: /killplayer <player> <user_name>
+    permission: troll.admin
+  diamondcreeper:
+    description: Spawn a charged creeper that turns blasted blocks into diamond ore (no damage).
+    usage: /diamondcreeper <player> <user_name> [radius]
+    permission: troll.admin
+permissions:
+  troll.admin:
+    description: Allows use of PlayerTroll commands.
+    default: op
